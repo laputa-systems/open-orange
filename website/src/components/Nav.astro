@@ -1,5 +1,5 @@
 ---
-import Logo from './Logo.astro';
+import Brand from './Brand.astro';
 import { NAV, SITE } from '@/data/site';
 import { BINDINGS } from '@/data/bindings';
 
@@ -17,10 +17,7 @@ const container = Astro.url.pathname.startsWith('/docs/') ? 'container-docs' : '
 <header class="sticky top-0 z-50 bg-paper/85 backdrop-blur-md">
 	<div class:list={[container, 'flex h-[72px] items-center justify-between gap-6']}>
 		<div class="flex items-center gap-10">
-			<a href="/" class="flex shrink-0 items-center gap-2.5 text-[15px] font-semibold tracking-[-0.01em]">
-				<Logo size={26} />
-				<span>Open<span class="text-orange">Orange</span></span>
-			</a>
+			<Brand />
 
 			<nav aria-label="Primary" class="hidden items-center gap-7 md:flex">
 				{NAV.map((item) => (

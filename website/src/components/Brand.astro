@@ -1,0 +1,16 @@
+---
+// The OpenOrange lockup for the nav and footer: the logo, wordmark and a
+// "by Rivet" byline, all one link home. Links can't nest, so the byline is
+// text; the footer links to rivet.dev.
+import Logo from './Logo.astro';
+---
+
+<a href="/" class="flex shrink-0 items-center gap-2.5">
+	<Logo size={32} />
+	<span class="flex flex-col leading-[1.15]">
+		<span class="text-[15px] font-semibold tracking-[-0.01em]">Open<span class="text-orange">Orange</span></span>
+		<span class="mt-0.5 inline-flex items-center gap-1 text-[11.5px] font-medium text-ink-faint">
+			by <img src="/images/rivet.svg" width="11" height="11" alt="" aria-hidden="true" class="rounded-[4px]" /><span class="text-ink-soft">Rivet</span>
+		</span>
+	</span>
+</a>

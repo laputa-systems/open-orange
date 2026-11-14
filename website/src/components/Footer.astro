@@ -1,5 +1,5 @@
 ---
-import Logo from './Logo.astro';
+import Brand from './Brand.astro';
 import { NAV, SITE } from '@/data/site';
 
 const linkClass = 'text-ink-soft transition-colors hover:text-ink motion-reduce:transition-none';
@@ -10,10 +10,7 @@ const container = Astro.url.pathname.startsWith('/docs/') ? 'container-docs' : '
 <footer class="border-t border-line">
 	<div class:list={[container, 'grid gap-12 py-16 md:grid-cols-[1.6fr_1fr_1fr_1fr]']}>
 		<div>
-			<a href="/" class="flex items-center gap-2.5 text-[15px] font-semibold tracking-[-0.01em]">
-				<Logo size={26} />
-				<span>Open<span class="text-orange">Orange</span></span>
-			</a>
+			<Brand />
 			<p class="mt-5 max-w-sm text-[14px] leading-relaxed text-ink-soft">
 				An open-source project from <a href={SITE.rivet} class="link">Rivet</a>. Run the Cloudflare developer platform on the cloud you choose.
 			</p>
@@ -54,7 +51,12 @@ const container = Astro.url.pathname.startsWith('/docs/') ? 'container-docs' : '
 	</div>
 	<div class="border-t border-line">
 		<div class:list={[container, 'flex flex-col gap-2 py-5 text-[13px] text-ink-faint sm:flex-row sm:items-center sm:justify-between']}>
-			<span>© {new Date().getFullYear()} Rivet Gaming, Inc. · Apache 2.0</span>
+			<span class="flex flex-wrap items-center gap-x-2 gap-y-1">
+				<a href={SITE.rivet} class="inline-flex items-center gap-1.5 font-medium text-ink-soft transition-colors hover:text-ink motion-reduce:transition-none">
+					<img src="/images/rivet.svg" width="16" height="16" alt="" aria-hidden="true" class="rounded-[5px]" />Built by Rivet
+				</a>
+				<span><span class="hidden sm:inline">· </span>© {new Date().getFullYear()} Rivet Gaming, Inc. · Apache 2.0</span>
+			</span>
 			<span class="flex flex-wrap gap-x-5 gap-y-1">
 				<a href={`${SITE.rivet}/privacy/`} class={linkClass}>Privacy</a>
 				<a href={`${SITE.rivet}/terms/`} class={linkClass}>Terms</a>
