@@ -246,8 +246,9 @@ $ orange serve -c app/wrangler.json -c api/wrangler.json -c jobs/wrangler.json
   signature, the request is routed and seen as that host. Without the secret
   or with another signature, the headers are ignored. A Worker never sees
   either header.
-- Only the first Worker's runtime serves `RIVETKIT_METRICS_PORT`, so the
-  cluster's metrics cover that Worker's actors only.
+- Each Worker serves metrics on loopback at `RIVETKIT_METRICS_PORT` plus its
+  index. Scrape each port to collect every Worker's metrics. Startup fails if
+  the range exceeds port 65535.
 
 #### Workers that are not running
 

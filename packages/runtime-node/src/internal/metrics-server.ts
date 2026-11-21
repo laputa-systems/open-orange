@@ -22,9 +22,35 @@ export function metricsPortFromEnvironment(
 	return port;
 }
 
+export function metricsPortForWorkers(base: number | undefined, workers: number): number | undefined {
+	if (base !== undefined && base + workers - 1 > 65_535) {
+		throw new Error(`${metricsPortVariable} plus ${workers - 1} Worker offsets exceeds TCP port 65535`);
+	}
+	return base;
+}
+
+export function appendWorkerMetrics(text: string, worker: string, index: number, startTime: number): string {
+	const escaped = worker.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/"/g, '\\"');
+	const series = [
+		["openorange_worker_info", `# HELP openorange_worker_info Identifies this Worker.\n# TYPE openorange_worker_info gauge\nopenorange_worker_info{worker="${escaped}",index="${index}"} 1\n`],
+		["openorange_worker_start_time_seconds", `# HELP openorange_worker_start_time_seconds Runtime process start time in seconds.\n# TYPE openorange_worker_start_time_seconds gauge\nopenorange_worker_start_time_seconds ${startTime}\n`],
+	];
+	let result = text;
+	for (const [name, value] of series) {
+		if (name !== undefined && value !== undefined && !new RegExp(`^(?:# (?:HELP|TYPE) )?${name}(?:[\\s{]|$)`, "m").test(text)) {
+			if (result.length > 0 && !result.endsWith("\n")) result += "\n";
+			result += value;
+		}
+	}
+	return result;
+}
+
 export async function startMetricsServer(
 	port: number,
 	metrics: () => Promise<Response>,
+	worker: string,
+	index: number,
+	startTime: number,
 ): Promise<MetricsServer> {
 	const server = createServer((incoming, outgoing) => {
 		const pathname = (incoming.url ?? "/").split("?", 1)[0];
@@ -36,8 +62,10 @@ export async function startMetricsServer(
 			try {
 				const response = await metrics();
 				outgoing.statusCode = response.status;
-				response.headers.forEach((value, name) => outgoing.setHeader(name, value));
-				outgoing.end(Buffer.from(await response.arrayBuffer()));
+				response.headers.forEach((value, name) => {
+					if (name !== "content-length" || !response.ok) outgoing.setHeader(name, value);
+				});
+				outgoing.end(response.ok ? appendWorkerMetrics(await response.text(), worker, index, startTime) : Buffer.from(await response.arrayBuffer()));
 			} catch (error: unknown) {
 				outgoing.writeHead(500, { "content-type": "text/plain; charset=utf-8" });
 				outgoing.end(`metrics failed: ${error instanceof Error ? error.message : String(error)}\n`);

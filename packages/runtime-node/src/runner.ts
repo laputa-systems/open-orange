@@ -1276,6 +1276,8 @@ export async function startRuntime(
 	}
 	// A Rivet cluster scrapes the runner's metrics. A local Engine has no scraper.
 	const metricsPort = externalEngine ? metricsPortFromEnvironment(process.env) : undefined;
+	const metricsWorkerIndex = Number(process.env.OPENORANGE_METRICS_WORKER_INDEX ?? 0);
+	const metricsWorkerName = message.workerName ?? String(metricsWorkerIndex);
 	const metricsServer =
 		metricsPort === undefined
 			? undefined
@@ -1284,7 +1286,8 @@ export async function startRuntime(
 						return new Response("registry not started\n", { status: 503 });
 					}
 					return await durableObjectRegistry.prometheusMetrics();
-				});
+				}, metricsWorkerName, metricsWorkerIndex, (Date.now() - process.uptime() * 1000) / 1000);
+	if (metricsPort !== undefined) process.stderr.write(`Worker ${metricsWorkerName} metrics: http://127.0.0.1:${metricsPort}/metrics\n`);
 	// The cron actor runs in this process.
 	const cronSync = new AbortController();
 	if (durableObjectRegistry !== undefined && (crons.length > 0 || staleCronJobs)) {

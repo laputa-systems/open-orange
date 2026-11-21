@@ -1078,20 +1078,59 @@ test("under orange serve, inbound email needs the shared secret, and a provider'
 
 const multiWorkerFixture = join(repositoryRoot, "tests", "fixtures", "serve-multi-worker");
 
+test("orange serve exposes each Worker's metrics and a new start time after restart", { timeout: 240_000 }, async () => {
+	const engine = await startStandaloneEngine();
+	const project = await copyProject(multiWorkerFixture);
+	let serve: RunningServe | undefined;
+	try {
+		let metricsPort: number;
+		for (;;) {
+			metricsPort = await freePort();
+			if (metricsPort === 65535) continue;
+			const probe = createServer();
+			const available = await new Promise<boolean>((resolve) => {
+				probe.once("error", () => resolve(false));
+				probe.listen(metricsPort + 1, "127.0.0.1", () => probe.close(() => resolve(true)));
+			});
+			if (available) break;
+		}
+		const configs = ["wrangler.jsonc", "wrangler.peer.jsonc"];
+		const start = async () => await startServe(project.directory, engine.endpoint, await freePort(), { RIVETKIT_METRICS_PORT: String(metricsPort) }, configs);
+		serve = await start();
+		const scrape = async (index: number, name: string): Promise<number> => {
+			const response = await fetch(`http://127.0.0.1:${metricsPort + index}/metrics`);
+			assert.equal(response.status, 200, serve?.output());
+			const body = await response.text();
+			assert.match(body, /^# (?:HELP|TYPE) rivet_/m);
+			assert.ok(body.includes(`openorange_worker_info{worker="${name}",index="${index}"} 1`));
+			const time = body.match(/^openorange_worker_start_time_seconds ([\d.]+)$/m);
+			assert.ok(time);
+			return Number(time[1]);
+		};
+		const first = await scrape(0, "serve-primary");
+		await scrape(1, "serve-peer");
+		assert.match(serve.output(), new RegExp(`Worker serve-peer metrics: http://127\\.0\\.0\\.1:${metricsPort + 1}/metrics`));
+		await stopServe(serve);
+		serve = undefined;
+		serve = await start();
+		assert.ok(await scrape(0, "serve-primary") > first);
+	} finally {
+		await stopServe(serve);
+		await project.dispose();
+		await engine.stop();
+	}
+});
+
 test("orange serve with several Workers sends each request to the Worker its route names, and the Workers reach each other", { timeout: 240_000 }, async () => {
 	const engine = await startStandaloneEngine();
 	const project = await copyProject(multiWorkerFixture);
 	const port = await freePort();
-	const metricsPort = await freePort();
-	const serve = await startServe(project.directory, engine.endpoint, port, { RIVETKIT_METRICS_PORT: String(metricsPort) }, [
+	const serve = await startServe(project.directory, engine.endpoint, port, {}, [
 		"wrangler.jsonc",
 		"wrangler.peer.jsonc",
 	]);
 	try {
 		const origin = `http://127.0.0.1:${port}`;
-		// Only one runtime serves the cluster's metrics port, so the deployment starts.
-		const metrics = await fetch(`http://127.0.0.1:${metricsPort}/metrics`);
-		assert.equal(metrics.status, 200, serve.output());
 		const json = async (path: string): Promise<unknown> => {
 			const response = await fetch(`${origin}${path}`);
 			assert.equal(response.status, 200, serve.output());

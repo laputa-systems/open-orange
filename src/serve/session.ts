@@ -10,6 +10,7 @@ import type { ResolvedWranglerConfiguration } from "../config/load-wrangler.js";
 import { resolveDeploymentStorages } from "../runtime/deployment.js";
 import { spawnRuntime, type RuntimeProcess } from "../runtime/spawn.js";
 import type { RuntimeSessionWorker } from "../../packages/runtime-node/src/process-protocol.js";
+import { metricsPortForWorkers, metricsPortFromEnvironment } from "../../packages/runtime-node/src/internal/metrics-server.js";
 import { primaryRivetPoolName } from "../../packages/runtime-node/src/session/workers.js";
 import { forwardedHostSecretVariable, startFront, type FrontTarget, type RunningFront } from "./front.js";
 import { compileRoutes } from "./routes.js";
@@ -61,6 +62,7 @@ export interface ServeSessionOptions {
  * request, and with the first Worker otherwise.
  */
 export async function serveSession(options: ServeSessionOptions): Promise<number> {
+	const metricsPort = metricsPortForWorkers(metricsPortFromEnvironment(process.env), options.configs.length);
 	const names = new Set<string>();
 	for (const config of options.configs) {
 		if (config.workerName === undefined) {
@@ -132,8 +134,8 @@ export async function serveSession(options: ServeSessionOptions): Promise<number
 				rivetEndpoint: options.endpoint,
 				rivetNamespace: options.namespace,
 				rivetStoragePath: primaryStorage.rivetStoragePath,
-				// The cluster scrapes one metrics port, which the first Worker's runtime serves.
-				serveMetrics: index === 0,
+				...(metricsPort === undefined ? {} : { metricsPort: metricsPort + index }),
+				metricsWorkerIndex: index,
 				session: {
 					self: config.workerName ?? "",
 					sharedPool: true,

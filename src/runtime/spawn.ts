@@ -56,8 +56,8 @@ export interface SpawnRuntimeOptions {
 	rivetEndpoint?: string;
 	rivetNamespace: string;
 	rivetStoragePath: string;
-	// False keeps the runtime from serving RIVETKIT_METRICS_PORT.
-	serveMetrics?: boolean;
+	metricsPort?: number;
+	metricsWorkerIndex?: number;
 	session?: RuntimeSessionConfiguration;
 	startupTimeoutMs?: number;
 	// Where the runtime's standard output goes. Commands whose standard output
@@ -133,8 +133,8 @@ export async function spawnRuntime(
 			// environment. Bun does not copy runtime `process.env` writes there.
 			RIVETKIT_STORAGE_PATH: options.rivetStoragePath,
 			...(options.rivetLogLevel === undefined ? {} : { RIVET_LOG_LEVEL: options.rivetLogLevel }),
-			// One port can have one metrics server, so only one runtime of a deployment serves it.
-			...(options.serveMetrics === false ? { RIVETKIT_METRICS_PORT: undefined } : {}),
+			...(options.metricsPort === undefined ? {} : { RIVETKIT_METRICS_PORT: String(options.metricsPort) }),
+			OPENORANGE_METRICS_WORKER_INDEX: String(options.metricsWorkerIndex ?? 0),
 		},
 		// The built package runs plain JavaScript. Only a source checkout needs tsx,
 		// and it has tsx installed.

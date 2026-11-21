@@ -96,8 +96,10 @@ RivetKit serves Prometheus metrics at `http://127.0.0.1:$RIVETKIT_METRICS_PORT/m
 - **Self-hosted:** the endpoint listens on `127.0.0.1` only, so `docker run -p` does not expose
   it. Scrape it from the same network namespace, such as a sidecar in the same Kubernetes pod.
 - `orange dev` serves no metrics.
-- With several Workers, only the first Worker's runtime serves metrics, so they cover that
-  Worker's objects only.
+- With several Workers, Worker index 0 serves on the configured port and each subsequent
+  Worker serves on that port plus its index. Scrape each port in the same network namespace.
+  Each response identifies its Worker with `openorange_worker_info` and its runtime start time
+  with `openorange_worker_start_time_seconds`. Startup fails if the port range exceeds 65535.
 
 | Metric | What it shows |
 |---|---|
