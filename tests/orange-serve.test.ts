@@ -22,6 +22,7 @@ const requireFromRivetKit = createRequire(createRequire(import.meta.url).resolve
 const { getEnginePath } = requireFromRivetKit("@rivetkit/engine-cli") as { getEnginePath(): string };
 const cliEntrypoint = join(repositoryRoot, "src", "bin.ts");
 const adminToken = "orange-serve-test";
+const { version: packageVersion } = createRequire(import.meta.url)("../package.json") as { version: string };
 
 async function freePort(): Promise<number> {
 	const server = createServer();
@@ -168,6 +169,14 @@ async function startServe(
 		serve.child.once("exit", () => rejectReady(new Error(`orange serve exited:\n${serve.output()}`)));
 	});
 	await withDeadline(ready, "orange serve readiness", 60_000);
+	if ((configs?.length ?? 1) > 1) {
+		try {
+			assert.ok(serve.output().includes(`orange serve listening on http://0.0.0.0:${port} with ${configs?.length} Workers (open-orange ${packageVersion})`), serve.output());
+		} catch (error) {
+			serve.child.kill("SIGTERM");
+			throw error;
+		}
+	}
 	return serve;
 }
 
@@ -570,6 +579,7 @@ test("orange serve builds a Worker for production, as wrangler deploy does", asy
 			NODE_ENV: "",
 			RIVET_TOKEN: adminToken,
 		});
+		assert.ok(serve.output().includes(`orange serve listening on http://0.0.0.0:${port} (open-orange ${packageVersion})`), serve.output());
 		assert.equal(await (await fetch(`http://127.0.0.1:${port}/`)).text(), "production");
 	} finally {
 		if (serve !== undefined) {

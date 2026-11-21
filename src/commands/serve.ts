@@ -9,6 +9,7 @@ import type { Theme } from "../cli/theme.js";
 import { loadWranglerConfiguration } from "../config/load-wrangler.js";
 import { resolveDeploymentStorage } from "../runtime/deployment.js";
 import { spawnRuntime } from "../runtime/spawn.js";
+import { orangeVersion } from "../version.js";
 import { bundleForServe, serveSession } from "../serve/session.js";
 
 export interface ServeCommandIo {
@@ -147,7 +148,7 @@ async function executeServeCommand(
 			rivetStoragePath,
 			startupTimeoutMs: 60_000,
 		});
-		io.log(`orange serve listening on http://${runtime.host}:${runtime.port}`);
+		io.log(`orange serve listening on http://${runtime.host}:${runtime.port} (open-orange ${orangeVersion})`);
 		const stop = (): void => {
 			void runtime.stop();
 		};

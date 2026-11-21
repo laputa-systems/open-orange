@@ -7,6 +7,7 @@ import { findAdditionalModules } from "../build/additional-modules.js";
 import { bundleWorker } from "../build/bundle-worker.js";
 import { runtimeModuleRewrites } from "../build/rewrite-module-imports.js";
 import type { ResolvedWranglerConfiguration } from "../config/load-wrangler.js";
+import { orangeVersion } from "../version.js";
 import { resolveDeploymentStorages } from "../runtime/deployment.js";
 import { spawnRuntime, type RuntimeProcess } from "../runtime/spawn.js";
 import type { RuntimeSessionWorker } from "../../packages/runtime-node/src/process-protocol.js";
@@ -163,7 +164,7 @@ export async function serveSession(options: ServeSessionOptions): Promise<number
 		}
 		const host = running?.host ?? runtimes[0]?.host ?? options.host;
 		const port = running?.port ?? runtimes[0]?.port ?? options.port;
-		options.log(`orange serve listening on http://${host}:${port} with ${options.configs.length} Workers`);
+		options.log(`orange serve listening on http://${host}:${port} with ${options.configs.length} Workers (open-orange ${orangeVersion})`);
 		const stop = (): void => {
 			for (const runtime of runtimes) void runtime.stop();
 		};
