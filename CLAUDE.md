@@ -1,5 +1,7 @@
 # Contributor guide
 
+The roadmap, [docs/roadmap.md](docs/roadmap.md), holds all current and future work; its Status is the resume point.
+
 ## Commits and pull requests
 
 - Commit titles and pull request titles are conventional commits (`feat`, `fix`, `chore`, `docs`, `refactor`), with an optional scope.
